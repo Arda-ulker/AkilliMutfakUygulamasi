@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "367616043369",
+    "project_id": "akillimutfak-d2968",
+    "storage_bucket": "akillimutfak-d2968.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:367616043369:android:a2c411a716adc7ce39b5f8",
+        "android_client_info": {
+          "package_name": "com.example.akilli_mutfak"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-6IpVuNGz0zmG-rbABIMwLmdstfMvq-M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
