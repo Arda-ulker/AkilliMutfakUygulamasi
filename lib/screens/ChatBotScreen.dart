@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:akilli_mutfak/constants/app_colors.dart'; 
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:akilli_mutfak/constants/app_colors.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 class ChatScreen extends StatefulWidget {
   final bool askForIngredients; 
   final List<String> categories;
@@ -14,35 +18,16 @@ class _ChatScreenState extends State<ChatScreen> {
   List<Map<String, dynamic>> messages = [];
   bool _isLoading = false;
 
-  static const String _apiKey = 'AIzaSyBH-jBycJUxYd5CaoeuAbjEsSAbCWBcrUM';
-
-  late final GenerativeModel _model;
-  late final ChatSession _chat;
+  // Backend URL (10.0.2.2 is for Android Emulator, 127.0.0.1 for iOS/Desktop)
+  String get _backendUrl {
+    if (kIsWeb) return 'http://127.0.0.1:8000/chat';
+    if (Platform.isAndroid) return 'http://10.0.2.2:8000/chat';
+    return 'http://127.0.0.1:8000/chat';
+  }
 
   @override
   void initState() {
     super.initState();
-
-    // Gemini modelini system instruction ile başlat
-    _model = GenerativeModel(
-      model: 'gemini-2.5-flash',
-      apiKey: _apiKey,
-      systemInstruction: Content.text(
-        '''Sen deneyimli ve yardımsever bir Türk mutfak asistanısın. Adın "AI Şef".
-Görevin kullanıcılara yemek tarifleri, mutfak ipuçları ve malzeme önerileri sunmak.
-Yanıt verirken şu kurallara uy:
-- Her zaman Türkçe yanıt ver
-- Kısa ve net ol, gereksiz açıklamalardan kaçın
-- Samimi ve teşvik edici bir ton kullan
-- Tarif verirken adım adım yönlendirme yap
-- Malzeme miktarlarını belirt
-- Pişirme sürelerini belirt
-- Emoji kullan ama abartma'''
-      ),
-    );
-
-    // Chat oturumu başlat
-    _chat = _model.startChat();
 
     if (widget.askForIngredients) {
       messages.add({
@@ -86,29 +71,46 @@ Yanıt verirken şu kurallara uy:
     _scrollToBottom();
 
     try {
-      // Malzeme bağlamı varsa prompt'a ekle
-      String prompt = userText;
-      if (widget.categories.isNotEmpty) {
-        prompt = """Kullanıcının elindeki malzemeler: ${widget.categories.join(', ')}
-Bunları göz önünde bulundurarak yanıt ver.
-Kullanıcı sorusu: "$userText"
-Yalnızca mevcut malzemeleri kullanarak öneri sun.""";
-      }
+      // Arkauca (Backend) gönderilecek veriyi hazırla
+      // Son soruyu göndereceğiz, geçmiş olarak da öncekileri
+      List<Map<String, dynamic>> historyToSend = messages
+          .take(messages.length - 1) // Son eklenen 'text': userText hariç hepsi
+          .where((m) => m['text'] != '🤔 Düşünüyorum...')
+          .toList();
 
-      final response = await _chat.sendMessage(Content.text(prompt));
-      final responseText = response.text;
+      final requestBody = {
+        'message': userText,
+        'ingredients': widget.categories,
+        'history': historyToSend.map((m) => {
+          'text': m['text'],
+          'isAI': m['isAI']
+        }).toList(),
+      };
 
-      setState(() {
-        messages.removeLast(); // "Düşünüyorum..." mesajını kaldır
-        messages.add({
-          'text': responseText ?? 'Üzgünüm, bir yanıt oluşturamadım. Tekrar deneyin.',
-          'isAI': true,
+      final response = await http.post(
+        Uri.parse(_backendUrl),
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        final responseText = data['response'];
+
+        setState(() {
+          messages.removeLast(); // "Düşünüyorum..." mesajını kaldır
+          messages.add({
+            'text': responseText ?? 'Üzgünüm, bir yanıt oluşturamadım. Tekrar deneyin.',
+            'isAI': true,
+          });
+          _isLoading = false;
         });
-        _isLoading = false;
-      });
-      _scrollToBottom();
+        _scrollToBottom();
+      } else {
+        throw Exception('Sunucu hatası: ${response.statusCode}');
+      }
     } catch (e) {
-      debugPrint('Gemini API Hatası: $e');
+      debugPrint('API Hatası: $e');
       setState(() {
         messages.removeLast(); // "Düşünüyorum..." mesajını kaldır
         messages.add({
