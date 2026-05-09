@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:akilli_mutfak/constants/app_colors.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, SocketException;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:async';
 
 class ChatScreen extends StatefulWidget {
   final bool askForIngredients; 
@@ -91,7 +92,7 @@ class _ChatScreenState extends State<ChatScreen> {
         Uri.parse(_backendUrl),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode(requestBody),
-      );
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
@@ -111,10 +112,13 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     } catch (e) {
       debugPrint('API Hatası: $e');
+      final errorMessage = e is SocketException || e.toString().contains('Connection timed out')
+          ? '❌ Backend sunucusuna ulaşılamıyor. Android emulatördeyseniz backend\'i başlattığınızdan ve `$_backendUrl` adresinin doğru olduğundan emin olun.'
+          : '❌ Bir hata oluştu: ${e.toString().length > 200 ? '${e.toString().substring(0, 200)}...' : e.toString()}';
       setState(() {
         messages.removeLast(); // "Düşünüyorum..." mesajını kaldır
         messages.add({
-          'text': '❌ Bir hata oluştu: ${e.toString().length > 200 ? '${e.toString().substring(0, 200)}...' : e.toString()}',
+          'text': errorMessage,
           'isAI': true,
         });
         _isLoading = false;
