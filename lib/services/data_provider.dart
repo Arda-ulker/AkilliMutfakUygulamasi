@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/foundation.dart';
+import 'package:akilli_mutfak/constants/api_keys.dart';
 
 /// Uygulama genelinde veri tutan Singleton servis.
 /// Splash Screen'de veriler yüklenip burada cache'lenir,
@@ -18,7 +19,7 @@ class DataProvider {
   bool _isLoaded = false;
 
   // ── Gemini ──
-  static const String _apiKey = 'AIzaSyBH-jBycJUxYd5CaoeuAbjEsSAbCWBcrUM';
+  static const String _apiKey = ApiKeys.geminiApiKey;
   late final GenerativeModel geminiModel;
   bool _geminiReady = false;
 
@@ -69,8 +70,13 @@ class DataProvider {
   /// Gemini modelini önceden başlat
   void _initGemini() {
     try {
+      if (_apiKey.isEmpty || _apiKey.contains('BURAYA_GEMINI_API_ANAHTARINIZI_YAPISTIRIN')) {
+        _geminiReady = false;
+        debugPrint('⚠️ DataProvider: Gemini API anahtarı ayarlanmamış veya varsayılan değerde.');
+        return;
+      }
       geminiModel = GenerativeModel(
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         apiKey: _apiKey,
         systemInstruction: Content.text(
           '''Sen deneyimli ve yardımsever bir Türk mutfak asistanısın. Adın "AI Şef".
@@ -88,6 +94,7 @@ Yanıt verirken şu kurallara uy:
       _geminiReady = true;
       debugPrint('✅ DataProvider: Gemini model hazır.');
     } catch (e) {
+      _geminiReady = false;
       debugPrint('❌ DataProvider: Gemini başlatma hatası: $e');
     }
   }

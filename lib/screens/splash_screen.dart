@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:akilli_mutfak/constants/app_colors.dart';
 import 'package:akilli_mutfak/services/data_provider.dart';
 import 'package:akilli_mutfak/services/firebase_sync_service.dart';
-import 'package:akilli_mutfak/screens/homeScreen.dart';
+import 'package:akilli_mutfak/screens/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -98,7 +98,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
-                      color: kGreen.withOpacity(0.35),
+                      color: kGreen.withValues(alpha: 0.35),
                       blurRadius: 24,
                       offset: const Offset(0, 8),
                     ),

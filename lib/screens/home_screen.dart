@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:akilli_mutfak/constants/app_colors.dart';
-import 'package:akilli_mutfak/screens/ChatBotScreen.dart';
-import 'package:akilli_mutfak/screens/recipeDetailScreen.dart';
+import 'package:akilli_mutfak/screens/chat_bot_screen.dart';
+import 'package:akilli_mutfak/screens/recipe_detail_screen.dart';
 import 'package:akilli_mutfak/screens/favoriler_screen.dart';
 import 'package:akilli_mutfak/screens/all_recipes_screen.dart';
 import 'package:akilli_mutfak/screens/liste_screen.dart';
@@ -97,7 +97,7 @@ class _HomeScreenState extends State<HomeScreen>{
       decoration: BoxDecoration(
         color: kCardBg,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, -2)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, -2)),
         ],
       ),
       child: SafeArea(
@@ -122,7 +122,7 @@ class _HomeScreenState extends State<HomeScreen>{
                           color: kGreen,
                           shape: BoxShape.circle,
                           boxShadow: [
-                            BoxShadow(color: kGreen.withOpacity(0.4), blurRadius: 12, offset: const Offset(0, 4)),
+                            BoxShadow(color: kGreen.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)),
                           ],
                         ),
                         child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 26),
@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen>{
           color: kCardBg,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 8, offset: const Offset(0, 2)),
+            BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2)),
           ],
         ),
         child: Row(
@@ -262,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen>{
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.search_off_rounded, color: kTextGrey.withOpacity(0.5), size: 48),
+              Icon(Icons.search_off_rounded, color: kTextGrey.withValues(alpha: 0.5), size: 48),
               const SizedBox(height: 12),
               Text(
                 '"${_searchController.text}" için sonuç bulunamadı',
@@ -297,7 +297,7 @@ class _HomeScreenState extends State<HomeScreen>{
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
@@ -310,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen>{
                     child: Image.network(
                       recipe['image'] ?? '',
                       width: 56, height: 56, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         width: 56, height: 56,
                         decoration: BoxDecoration(
                           color: kLightGreen,
@@ -389,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen>{
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: kCategories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
                   final sel= _selectedCategoryIndex == i;
                   return GestureDetector(
@@ -403,7 +403,7 @@ class _HomeScreenState extends State<HomeScreen>{
                         borderRadius: BorderRadius.circular(20),
                         boxShadow:[
                           BoxShadow(
-                            color: sel ? kGreen.withOpacity(0.3) : Colors.black.withOpacity(0.05), 
+                            color: sel ? kGreen.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.05), 
                             blurRadius: sel ? 10 : 4, 
                             offset: const Offset(0, 3)
                           )
@@ -506,7 +506,7 @@ class _HomeScreenState extends State<HomeScreen>{
       decoration: BoxDecoration(
         color: kCardBg,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.07), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 8, offset: const Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -518,7 +518,7 @@ class _HomeScreenState extends State<HomeScreen>{
                 child: Image.network(
                   recipeData['image'] ?? 'https://via.placeholder.com/150', 
                   height: 95, width: 140, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     height: 95, width: 140, color: const Color(0xFFEEEEEE),
                     child: const Icon(Icons.restaurant, color: Colors.grey),
                   ),
@@ -540,7 +540,7 @@ class _HomeScreenState extends State<HomeScreen>{
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: kGreen.withOpacity(0.85),
+                      color: kGreen.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -629,7 +629,7 @@ class _HomeScreenState extends State<HomeScreen>{
                 Image.network(
                   recipeData['image'] ?? 'https://via.placeholder.com/300x120', 
                   width: double.infinity, height: 120, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorBuilder: (_, _, _) => Container(
                     width: double.infinity, height: 120, color: const Color(0xFFEEEEEE),
                     child: const Icon(Icons.restaurant, color: Colors.grey),
                   ),
@@ -641,7 +641,7 @@ class _HomeScreenState extends State<HomeScreen>{
                       end: Alignment.centerLeft,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.72),
+                        Colors.black.withValues(alpha: 0.72),
                       ],
                       stops: const [0.3, 1.0],
                     ), 
@@ -680,7 +680,7 @@ class _HomeScreenState extends State<HomeScreen>{
                         Text(
                           recipeData['subtitle'] ?? '',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.85),
+                            color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 12,
                           ),
                           maxLines: 2,
@@ -695,7 +695,7 @@ class _HomeScreenState extends State<HomeScreen>{
                     child:Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: const Icon(Icons.bookmark_border, color: Colors.white, size: 18),

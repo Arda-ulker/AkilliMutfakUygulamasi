@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:akilli_mutfak/constants/app_colors.dart';
 import 'package:akilli_mutfak/services/data_provider.dart';
-import 'package:akilli_mutfak/screens/recipeDetailScreen.dart';
+import 'package:akilli_mutfak/screens/recipe_detail_screen.dart';
 
 class AllRecipesScreen extends StatefulWidget {
   final String initialCategory;
@@ -54,7 +54,7 @@ class _AllRecipesScreenState extends State<AllRecipesScreen> {
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: _categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
                   final sel = _selectedIndex == i;
                   return GestureDetector(
@@ -66,7 +66,7 @@ class _AllRecipesScreenState extends State<AllRecipesScreen> {
                         color: sel ? kGreen : kBg,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: sel
-                            ? [BoxShadow(color: kGreen.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 3))]
+                            ? [BoxShadow(color: kGreen.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))]
                             : [],
                       ),
                       child: Text(
@@ -152,7 +152,7 @@ class _AllRecipesScreenState extends State<AllRecipesScreen> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.07),
+              color: Colors.black.withValues(alpha: 0.07),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -172,7 +172,7 @@ class _AllRecipesScreenState extends State<AllRecipesScreen> {
                       recipe['image'] ?? '',
                       width: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
+                      errorBuilder: (_, _, _) => Container(
                         color: kLightGreen,
                         child: const Center(
                           child: Icon(Icons.restaurant, color: kGreen, size: 36),
@@ -188,7 +188,7 @@ class _AllRecipesScreenState extends State<AllRecipesScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: kGreen.withOpacity(0.9),
+                          color: kGreen.withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(

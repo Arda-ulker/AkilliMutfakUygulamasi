@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:akilli_mutfak/constants/app_colors.dart';
 import 'package:akilli_mutfak/services/data_provider.dart';
 import 'package:akilli_mutfak/services/firebase_sync_service.dart';
-import 'package:akilli_mutfak/screens/recipeDetailScreen.dart';
+import 'package:akilli_mutfak/screens/recipe_detail_screen.dart';
 
 class FavorilerScreen extends StatefulWidget {
   const FavorilerScreen({super.key});
@@ -55,7 +55,7 @@ class _FavorilerScreenState extends State<FavorilerScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Favorilerim',
+                    'Emir Hocanın Spesyalleri',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   Text(
@@ -127,7 +127,7 @@ class _FavorilerScreenState extends State<FavorilerScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 3),
             ),
@@ -143,7 +143,7 @@ class _FavorilerScreenState extends State<FavorilerScreen> {
                 width: 110,
                 height: 110,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
+                errorBuilder: (_, _, _) => Container(
                   width: 110,
                   height: 110,
                   color: kLightGreen,
@@ -229,7 +229,7 @@ class _FavorilerScreenState extends State<FavorilerScreen> {
                 margin: const EdgeInsets.only(right: 12),
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.favorite, color: Colors.redAccent, size: 20),

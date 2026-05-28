@@ -161,7 +161,7 @@ class _ListeScreenState extends State<ListeScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
+                  color: Colors.red.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
@@ -189,7 +189,7 @@ class _ListeScreenState extends State<ListeScreen> {
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 2)),
           ],
@@ -236,7 +236,7 @@ class _ListeScreenState extends State<ListeScreen> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: kCategories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final sel = _selectedCategoryIndex == i;
           return GestureDetector(
@@ -252,8 +252,8 @@ class _ListeScreenState extends State<ListeScreen> {
                 boxShadow: [
                   BoxShadow(
                     color: sel
-                        ? kGreen.withOpacity(0.3)
-                        : Colors.black.withOpacity(0.05),
+                        ? kGreen.withValues(alpha: 0.3)
+                        : Colors.black.withValues(alpha: 0.05),
                     blurRadius: sel ? 10 : 4,
                     offset: const Offset(0, 3),
                   ),
@@ -280,7 +280,7 @@ class _ListeScreenState extends State<ListeScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.shopping_basket_outlined,
-              color: kTextGrey.withOpacity(0.4), size: 52),
+              color: kTextGrey.withValues(alpha: 0.4), size: 52),
           const SizedBox(height: 12),
           Text(
             _searchQuery.isNotEmpty
@@ -313,7 +313,7 @@ class _ListeScreenState extends State<ListeScreen> {
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(isChecked ? 0.02 : 0.05),
+                color: Colors.black.withValues(alpha: isChecked ? 0.02 : 0.05),
                 blurRadius: 6,
                 offset: const Offset(0, 2),
               ),
@@ -379,7 +379,7 @@ class _ListeScreenState extends State<ListeScreen> {
                             recipeName,
                             style: TextStyle(
                               fontSize: 11,
-                              color: kTextGrey.withOpacity(0.7),
+                              color: kTextGrey.withValues(alpha: 0.7),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

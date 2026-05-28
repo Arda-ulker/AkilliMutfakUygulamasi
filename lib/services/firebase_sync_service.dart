@@ -2,11 +2,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/foundation.dart';
 import 'recipe_api_service.dart';
+import 'package:akilli_mutfak/constants/api_keys.dart';
 
 /// Firebase sync servisi - TheMealDB'den gelen tarifleri Firebase'e yazar
 /// ve Gemini ile tamamını Türkçeye çevirir
 class FirebaseSyncService {
-  static const String _geminiApiKey = 'AIzaSyBH-jBycJUxYd5CaoeuAbjEsSAbCWBcrUM';
+  static const String _geminiApiKey = ApiKeys.geminiApiKey;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   /// Tarifleri TheMealDB'den çekip Firebase'e yaz
@@ -21,6 +22,11 @@ class FirebaseSyncService {
       }
 
       debugPrint('Tarifler sync ediliyor...');
+
+      if (_geminiApiKey.isEmpty || _geminiApiKey.contains('BURAYA_GEMINI_API_ANAHTARINIZI_YAPISTIRIN')) {
+        debugPrint('⚠️ FirebaseSyncService: Gemini API anahtarı ayarlanmamış! Sync iptal ediliyor.');
+        return;
+      }
 
       // Gemini modelini çeviri için başlat
       final model = GenerativeModel(
@@ -100,6 +106,11 @@ class FirebaseSyncService {
       final existing = await _firestore.collection('OneCikanTarifler').limit(1).get();
       if (existing.docs.isNotEmpty) {
         debugPrint('Öne çıkan tarifler zaten mevcut.');
+        return;
+      }
+
+      if (_geminiApiKey.isEmpty || _geminiApiKey.contains('BURAYA_GEMINI_API_ANAHTARINIZI_YAPISTIRIN')) {
+        debugPrint('⚠️ FirebaseSyncService: Gemini API anahtarı ayarlanmamış! Öne çıkan tarif sync iptal ediliyor.');
         return;
       }
 

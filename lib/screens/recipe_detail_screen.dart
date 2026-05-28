@@ -94,7 +94,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   Image.network(
                     widget.recipeData['image'] ?? '',
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       color: kLightGreen,
                       child: const Icon(Icons.restaurant, size: 60, color: kGreen),
                     ),
@@ -106,7 +106,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.7),
+                          Colors.black.withValues(alpha: 0.7),
                         ],
                       ),
                     ),
@@ -158,7 +158,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -200,7 +200,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),

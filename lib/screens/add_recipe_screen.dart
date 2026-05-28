@@ -29,7 +29,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       });
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      print("Hata oluştu: $e");
+      debugPrint("Hata oluştu: $e");
     } finally {
       setState(() => _isLoading = false);
     }

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:akilli_mutfak/constants/app_colors.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'dart:io' show Platform, SocketException;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show SocketException;
 import 'dart:async';
+import 'package:akilli_mutfak/services/data_provider.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 
 class ChatScreen extends StatefulWidget {
   final bool askForIngredients; 
@@ -19,12 +18,7 @@ class _ChatScreenState extends State<ChatScreen> {
   List<Map<String, dynamic>> messages = [];
   bool _isLoading = false;
 
-  // Backend URL (10.0.2.2 is for Android Emulator, 127.0.0.1 for iOS/Desktop)
-  String get _backendUrl {
-    if (kIsWeb) return 'http://127.0.0.1:8000/chat';
-    if (Platform.isAndroid) return 'http://10.0.2.2:8000/chat';
-    return 'http://127.0.0.1:8000/chat';
-  }
+  // Cihaz üzerinden doğrudan Gemini API bağlantısı kurulmuştur (Backend gerekmez).
 
   @override
   void initState() {
@@ -72,49 +66,58 @@ class _ChatScreenState extends State<ChatScreen> {
     _scrollToBottom();
 
     try {
-      // Arkauca (Backend) gönderilecek veriyi hazırla
-      // Son soruyu göndereceğiz, geçmiş olarak da öncekileri
+      if (!DataProvider.instance.isGeminiReady) {
+        throw Exception('AI Şef hazır değil. Lütfen lib/constants/api_keys.dart dosyasına geçerli bir Gemini API anahtarı eklediğinizden emin olun.');
+      }
+
+      // Geçmiş mesajları al (Düşünüyorum hariç)
       List<Map<String, dynamic>> historyToSend = messages
-          .take(messages.length - 1) // Son eklenen 'text': userText hariç hepsi
+          .take(messages.length - 1)
           .where((m) => m['text'] != '🤔 Düşünüyorum...')
           .toList();
 
-      final requestBody = {
-        'message': userText,
-        'ingredients': widget.categories,
-        'history': historyToSend.map((m) => {
-          'text': m['text'],
-          'isAI': m['isAI']
-        }).toList(),
-      };
-
-      final response = await http.post(
-        Uri.parse(_backendUrl),
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: jsonEncode(requestBody),
-      ).timeout(const Duration(seconds: 15));
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        final responseText = data['response'];
-
-        setState(() {
-          messages.removeLast(); // "Düşünüyorum..." mesajını kaldır
-          messages.add({
-            'text': responseText ?? 'Üzgünüm, bir yanıt oluşturamadım. Tekrar deneyin.',
-            'isAI': true,
-          });
-          _isLoading = false;
-        });
-        _scrollToBottom();
-      } else {
-        throw Exception('Sunucu hatası: ${response.statusCode}');
+      // Gemini için konuşma geçmişini (history) oluştur
+      final List<Content> chatHistory = [];
+      for (final msg in historyToSend) {
+        final text = msg['text'] as String;
+        final isAI = msg['isAI'] as bool;
+        
+        chatHistory.add(
+          isAI ? Content.model([TextPart(text)]) : Content.text(text)
+        );
       }
+
+      // Gemini chat'ini başlat ve mesajı gönder
+      final chat = DataProvider.instance.geminiModel.startChat(history: chatHistory);
+      
+      // Eğer kullanıcının elindeki malzemeler (widget.categories) varsa, prompt'a ek bir bağlam ekleyebiliriz
+      String prompt = userText;
+      if (widget.askForIngredients && widget.categories.isNotEmpty && historyToSend.length <= 1) {
+        prompt = "Elimdeki malzemeler şunlar: ${widget.categories.join(', ')}. Bu malzemelerle ne yapabilirim? Soruma cevap ver: $userText";
+      }
+
+      final response = await chat.sendMessage(Content.text(prompt));
+      final responseText = response.text;
+
+      setState(() {
+        messages.removeLast(); // "Düşünüyorum..." mesajını kaldır
+        messages.add({
+          'text': responseText ?? 'Üzgünüm, bir yanıt oluşturamadım. Tekrar deneyin.',
+          'isAI': true,
+        });
+        _isLoading = false;
+      });
+      _scrollToBottom();
     } catch (e) {
       debugPrint('API Hatası: $e');
-      final errorMessage = e is SocketException || e.toString().contains('Connection timed out')
-          ? '❌ Backend sunucusuna ulaşılamıyor. Android emulatördeyseniz backend\'i başlattığınızdan ve `$_backendUrl` adresinin doğru olduğundan emin olun.'
-          : '❌ Bir hata oluştu: ${e.toString().length > 200 ? '${e.toString().substring(0, 200)}...' : e.toString()}';
+      String errorMessage = '❌ Bir hata oluştu: $e';
+      
+      if (e.toString().contains('API_KEY_INVALID') || e.toString().contains('API key not found')) {
+        errorMessage = '❌ Geçersiz API Anahtarı! Lütfen lib/constants/api_keys.dart dosyasındaki Gemini API anahtarınızı kontrol edin.';
+      } else if (e is SocketException) {
+        errorMessage = '❌ İnternet bağlantısı kurulamadı. Lütfen internetinizi kontrol edin.';
+      }
+      
       setState(() {
         messages.removeLast(); // "Düşünüyorum..." mesajını kaldır
         messages.add({
@@ -175,8 +178,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       boxShadow: [
                         BoxShadow(
                           color: isAI 
-                            ? Colors.black.withOpacity(0.05) 
-                            : Colors.green.withOpacity(0.15),
+                            ? Colors.black.withValues(alpha: 0.05) 
+                            : Colors.green.withValues(alpha: 0.15),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         )
@@ -201,7 +204,7 @@ class _ChatScreenState extends State<ChatScreen> {
               color: Colors.white,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, -2),
                 ),
