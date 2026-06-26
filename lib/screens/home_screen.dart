@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:akilli_mutfak/constants/app_colors.dart';
 import 'package:akilli_mutfak/screens/chat_bot_screen.dart';
@@ -13,8 +14,11 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>{
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
     int _selectedNav = 0;
+    bool _centerBtnPressed = false;
+    late final AnimationController _glowController;
+    late final Animation<double> _glowAnim;
     int _selectedCategoryIndex = 0;
     final List<String> categories = [];
     final TextEditingController _searchController = TextEditingController();
@@ -28,11 +32,19 @@ class _HomeScreenState extends State<HomeScreen>{
           _searchQuery = _searchController.text.trim().toLowerCase();
         });
       });
+      _glowController = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 1800),
+      )..repeat(reverse: true);
+      _glowAnim = Tween<double>(begin: 0.6, end: 1.0).animate(
+        CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+      );
     }
 
     @override
     void dispose() {
       _searchController.dispose();
+      _glowController.dispose();
       super.dispose();
     }
     final List<String> kCategories = ['Tümü', 'Zeytinyağlı', 'Hafif', 'Et', 'Tavuk'];
@@ -58,6 +70,22 @@ class _HomeScreenState extends State<HomeScreen>{
             )
         );
     }
+
+  void _pushToDetail(Map<String, dynamic> recipe, String heroTag) {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 380),
+        reverseTransitionDuration: const Duration(milliseconds: 320),
+        pageBuilder: (_, animation, secondaryAnimation) =>
+            RecipeDetailScreen(recipeData: recipe, heroTag: heroTag),
+        transitionsBuilder: (_, animation, secondaryAnimation, child) => FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+          child: child,
+        ),
+      ),
+    );
+  }
 
     Widget _buildHomeContent(){
       return Column(
@@ -86,78 +114,167 @@ class _HomeScreenState extends State<HomeScreen>{
     }
 
     Widget _buildBottomNav() {
-    final items = [
-      (Icons.home_rounded,        Icons.home_outlined,          'Ana Sayfa'),
-      (Icons.explore_rounded,     Icons.explore_outlined,       'Keşfet'),
-      (Icons.smart_toy_rounded,   Icons.smart_toy_outlined,     'AI Mutfak'),
-      (Icons.favorite_rounded,    Icons.favorite_border_rounded,'Favoriler'),
-      (Icons.list_alt_rounded,    Icons.list_alt_outlined,      'Liste'),
-    ];
     return Container(
       decoration: BoxDecoration(
         color: kCardBg,
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.08), blurRadius: 12, offset: const Offset(0, -2)),
+          BoxShadow(
+            color: kGreen.withValues(alpha: 0.10),
+            blurRadius: 16,
+            offset: const Offset(0, -2),
+          ),
         ],
       ),
       child: SafeArea(
         top: false,
         child: SizedBox(
           height: 64,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(items.length, (i) {
-              final isSelected = _selectedNav == i;
-              final isCenterBtn = i == 2;
-              if (isCenterBtn) {
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedNav = i),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          color: kGreen,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(color: kGreen.withValues(alpha: 0.4), blurRadius: 12, offset: const Offset(0, 4)),
-                          ],
-                        ),
-                        child: const Icon(Icons.smart_toy_rounded, color: Colors.white, size: 26),
-                      ),
-                    ],
-                  ),
-                );
-              }
-              return GestureDetector(
-                onTap: () => setState(() => _selectedNav = i),
-                child: SizedBox(
-                  width: 60,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        isSelected ? items[i].$1 : items[i].$2,
-                        color: isSelected ? kGreen : kTextGrey,
-                        size: 24,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        items[i].$3,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: isSelected ? kGreen : kTextGrey,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                        ),
-                      ),
-                    ],
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // ─── Sol + Sağ Nav İtemları ───
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(0, Icons.home_rounded,    Icons.home_outlined,           'Ana Sayfa'),
+                  _buildNavItem(1, Icons.explore_rounded, Icons.explore_outlined,        'Keşfet'),
+                  const SizedBox(width: 72), // FAB için boşluk
+                  _buildNavItem(3, Icons.favorite_rounded, Icons.favorite_border_rounded,'Favoriler'),
+                  _buildNavItem(4, Icons.list_alt_rounded, Icons.list_alt_outlined,      'Liste'),
+                ],
+              ),
+              // ─── AI Mutfak etiketi ───
+              Positioned(
+                bottom: 6,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Text(
+                    'AI Mutfak',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: _selectedNav == 2 ? kGreen : kTextGrey,
+                      fontWeight: _selectedNav == 2 ? FontWeight.w600 : FontWeight.normal,
+                    ),
                   ),
                 ),
-              );
-            }),
+              ),
+              // ─── Floating Action Button (üste taşıyor) ───
+              Positioned(
+                top: -22,
+                left: 0,
+                right: 0,
+                child: Center(child: _buildCenterFab()),
+              ),
+            ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData filled, IconData outlined, String label) {
+    final isSelected = _selectedNav == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedNav = index),
+      child: SizedBox(
+        width: 60,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isSelected ? filled : outlined,
+              color: isSelected ? kGreen : kTextGrey,
+              size: 24,
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                color: isSelected ? kGreen : kTextGrey,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterFab() {
+    final isSelected = _selectedNav == 2;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedNav = 2),
+      onTapDown: (_) => setState(() => _centerBtnPressed = true),
+      onTapUp: (_) => setState(() => _centerBtnPressed = false),
+      onTapCancel: () => setState(() => _centerBtnPressed = false),
+      child: AnimatedScale(
+        scale: _centerBtnPressed ? 0.88 : 1.0,
+        duration: const Duration(milliseconds: 130),
+        curve: Curves.easeOut,
+        child: AnimatedBuilder(
+          animation: _glowAnim,
+          builder: (_, child) {
+            return Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isSelected
+                      ? const [Color(0xFF6DD67E), Color(0xFF3DBA4E), Color(0xFF2A9B3F)]
+                      : const [Color(0xFF5CC96B), Color(0xFF3DBA4E), Color(0xFF2EA340)],
+                ),
+                boxShadow: [
+                  // Pulsing glow
+                  BoxShadow(
+                    color: kGreen.withValues(alpha: 0.50 * _glowAnim.value),
+                    blurRadius: 22,
+                    spreadRadius: 4,
+                  ),
+                  // Outer soft halo
+                  BoxShadow(
+                    color: kGreen.withValues(alpha: 0.22 * _glowAnim.value),
+                    blurRadius: 40,
+                    spreadRadius: 8,
+                  ),
+                  // Drop shadow
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.20),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Soft UI inner highlight
+                  Positioned(
+                    top: 9,
+                    left: 11,
+                    child: Container(
+                      width: 20,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.28),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  // Icon
+                  const Icon(
+                    Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
@@ -204,7 +321,7 @@ class _HomeScreenState extends State<HomeScreen>{
           color: kCardBg,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 8, offset: const Offset(0, 2)),
+            BoxShadow(color: kGreen.withValues(alpha: 0.09), blurRadius: 10, offset: const Offset(0, 2)),
           ],
         ),
         child: Row(
@@ -280,15 +397,9 @@ class _HomeScreenState extends State<HomeScreen>{
         itemCount: results.length,
         itemBuilder: (context, i) {
           final recipe = results[i];
+          final heroTag = 'recipe_search_${recipe['title']}';
           return GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => RecipeDetailScreen(recipeData: recipe),
-                ),
-              );
-            },
+            onTap: () => _pushToDetail(recipe, heroTag),
             child: Container(
               margin: const EdgeInsets.only(bottom: 10),
               padding: const EdgeInsets.all(10),
@@ -297,26 +408,29 @@ class _HomeScreenState extends State<HomeScreen>{
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 6,
+                    color: kGreen.withValues(alpha: 0.08),
+                    blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      recipe['image'] ?? '',
-                      width: 56, height: 56, fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        width: 56, height: 56,
-                        decoration: BoxDecoration(
-                          color: kLightGreen,
-                          borderRadius: BorderRadius.circular(10),
+                  Hero(
+                    tag: heroTag,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.network(
+                        recipe['image'] ?? '',
+                        width: 56, height: 56, fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
+                          width: 56, height: 56,
+                          decoration: BoxDecoration(
+                            color: kLightGreen,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.restaurant, color: kGreen, size: 24),
                         ),
-                        child: const Icon(Icons.restaurant, color: kGreen, size: 24),
                       ),
                     ),
                   ),
@@ -378,8 +492,8 @@ class _HomeScreenState extends State<HomeScreen>{
           children: [
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Text('Nasıl Bir Yemek Yapalım?', 
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold,color:kTextDark,letterSpacing: -0.2)),
+              child: Text('Nasıl Bir Yemek Pişirelim?',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: kTextDark, letterSpacing: -0.5)),
             ),
             const SizedBox(height: 10),
             SizedBox(
@@ -403,7 +517,7 @@ class _HomeScreenState extends State<HomeScreen>{
                         borderRadius: BorderRadius.circular(20),
                         boxShadow:[
                           BoxShadow(
-                            color: sel ? kGreen.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.05), 
+                            color: sel ? kGreen.withValues(alpha: 0.3) : kGreen.withValues(alpha: 0.07),
                             blurRadius: sel ? 10 : 4, 
                             offset: const Offset(0, 3)
                           )
@@ -436,7 +550,7 @@ class _HomeScreenState extends State<HomeScreen>{
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text('Tarifler',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: kTextDark)),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: kTextDark, letterSpacing: -0.4)),
                   GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -481,16 +595,10 @@ class _HomeScreenState extends State<HomeScreen>{
                     itemCount: recipes.length,
                     itemBuilder: (context, i){
                       final recipeData = recipes[i];
+                      final heroTag = 'recipe_home_${recipeData['title']}';
                       return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RecipeDetailScreen(recipeData: recipeData),
-                            ),
-                          );
-                        },
-                        child: _buildRecipeCard(recipeData),
+                        onTap: () => _pushToDetail(recipeData, heroTag),
+                        child: _buildRecipeCard(recipeData, heroTag: heroTag),
                       );
                     }
                   ),
@@ -499,32 +607,35 @@ class _HomeScreenState extends State<HomeScreen>{
         );
       }
 
-  Widget _buildRecipeCard(Map<String, dynamic> recipeData) {
+  Widget _buildRecipeCard(Map<String, dynamic> recipeData, {String? heroTag}) {
     return Container(
       width: 140,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
         color: kCardBg,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.07), blurRadius: 8, offset: const Offset(0, 2))],
+        boxShadow: [BoxShadow(color: kGreen.withValues(alpha: 0.10), blurRadius: 10, offset: const Offset(0, 2))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Stack(
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Image.network(
-                  recipeData['image'] ?? 'https://via.placeholder.com/150', 
-                  height: 95, width: 140, fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
-                    height: 95, width: 140, color: const Color(0xFFEEEEEE),
-                    child: const Icon(Icons.restaurant, color: Colors.grey),
+              Hero(
+                tag: heroTag ?? 'recipe_home_${recipeData['title']}',
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: Image.network(
+                    recipeData['image'] ?? 'https://via.placeholder.com/150',
+                    height: 95, width: 140, fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Container(
+                      height: 95, width: 140, color: const Color(0xFFEEEEEE),
+                      child: const Icon(Icons.restaurant, color: Colors.grey),
+                    ),
                   ),
                 ),
               ),
-              if (recipeData['isFavorite'] == true) 
+              if (recipeData['isFavorite'] == true)
                 Positioned(
                   top: 8, right: 8,
                   child: Container(
@@ -584,6 +695,7 @@ class _HomeScreenState extends State<HomeScreen>{
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: kTextDark,
+                  letterSpacing: -0.4,
                 ),
               ),
             ),
@@ -598,16 +710,10 @@ class _HomeScreenState extends State<HomeScreen>{
                 )
               : Column(
                   children: featured.map((data) {
+                    final heroTag = 'recipe_featured_${data['title']}';
                     return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RecipeDetailScreen(recipeData: data),
-                          ),
-                        );
-                      },
-                      child: _buildFeaturedCard(data),
+                      onTap: () => _pushToDetail(data, heroTag),
+                      child: _buildFeaturedCard(data, heroTag: heroTag),
                     );
                   }).toList(),
                 ),
@@ -615,7 +721,7 @@ class _HomeScreenState extends State<HomeScreen>{
         );
       }
 
-    Widget _buildFeaturedCard(Map<String, dynamic> recipeData){
+    Widget _buildFeaturedCard(Map<String, dynamic> recipeData, {String? heroTag}){
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
         child: ClipRRect(
@@ -626,26 +732,40 @@ class _HomeScreenState extends State<HomeScreen>{
             child: Stack(
               fit:StackFit.expand,
               children: [
-                Image.network(
-                  recipeData['image'] ?? 'https://via.placeholder.com/300x120', 
-                  width: double.infinity, height: 120, fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
-                    width: double.infinity, height: 120, color: const Color(0xFFEEEEEE),
-                    child: const Icon(Icons.restaurant, color: Colors.grey),
+                Hero(
+                  tag: heroTag ?? 'recipe_featured_${recipeData['title']}',
+                  child: Image.network(
+                    recipeData['image'] ?? 'https://via.placeholder.com/300x120',
+                    width: double.infinity, height: 120, fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Container(
+                      width: double.infinity, height: 120, color: const Color(0xFFEEEEEE),
+                      child: const Icon(Icons.restaurant, color: Colors.grey),
+                    ),
                   ),
                 ),
-                Container(
-                  decoration:BoxDecoration(
-                    gradient:LinearGradient(
-                      begin: Alignment.centerRight,
-                      end: Alignment.centerLeft,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withValues(alpha: 0.72),
-                      ],
-                      stops: const [0.3, 1.0],
-                    ), 
-                  )  
+                // Glassmorphism: buzlu cam efekti (alt kısım)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: 100,
+                  child: ClipRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.62),
+                              Colors.black.withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
                 Positioned(
                   bottom: 14,
@@ -674,7 +794,7 @@ class _HomeScreenState extends State<HomeScreen>{
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          letterSpacing: -0.2)
+                          letterSpacing: -0.3)
                         ),
                         const SizedBox(height: 3),
                         Text(

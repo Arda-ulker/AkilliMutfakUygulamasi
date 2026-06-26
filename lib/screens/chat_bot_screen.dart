@@ -116,6 +116,8 @@ class _ChatScreenState extends State<ChatScreen> {
         errorMessage = '❌ Geçersiz API Anahtarı! Lütfen lib/constants/api_keys.dart dosyasındaki Gemini API anahtarınızı kontrol edin.';
       } else if (e is SocketException) {
         errorMessage = '❌ İnternet bağlantısı kurulamadı. Lütfen internetinizi kontrol edin.';
+      } else if (e.toString().contains('503') || e.toString().contains('high demand') || e.toString().contains('UNAVAILABLE')) {
+        errorMessage = '🤖 Yapay zeka sunucuları şu an çok yoğun. Lütfen 1-2 dakika bekleyip tekrar deneyin.';
       }
       
       setState(() {
@@ -144,11 +146,22 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar( 
         backgroundColor: Colors.white,
         elevation: 1,
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.smart_toy, color: kGreen),
-            SizedBox(width: 8),
-            Text('AI Şef', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: const BoxDecoration(
+                color: kLightGreen,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.smart_toy,
+                color: kGreen,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Text('AI Şef', style: TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
         iconTheme: const IconThemeData(color: Colors.black),

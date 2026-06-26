@@ -37,7 +37,7 @@ class _AllRecipesScreenState extends State<AllRecipesScreen> {
         elevation: 1,
         title: const Text(
           'Tüm Tarifler',
-          style: TextStyle(color: kTextDark, fontSize: 18, fontWeight: FontWeight.bold),
+          style: TextStyle(color: kTextDark, fontSize: 18, fontWeight: FontWeight.bold, letterSpacing: -0.5),
         ),
         iconTheme: const IconThemeData(color: kTextDark),
       ),
@@ -110,7 +110,7 @@ class _AllRecipesScreenState extends State<AllRecipesScreen> {
                           '"${_categories[_selectedIndex]}" kategorisinde tarif yok',
                           style: const TextStyle(fontSize: 14, color: kTextGrey),
                         ),
-                      ],
+                        ],
                     ),
                   )
                 : GridView.builder(
@@ -135,16 +135,24 @@ class _AllRecipesScreenState extends State<AllRecipesScreen> {
 
   Widget _buildGridCard(Map<String, dynamic> recipe) {
     final isFav = DataProvider.instance.isFavorite(recipe['title'] ?? '');
+    final heroTag = 'recipe_all_${recipe['title']}';
 
     return GestureDetector(
       onTap: () async {
         await Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (_) => RecipeDetailScreen(recipeData: recipe),
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 380),
+            reverseTransitionDuration: const Duration(milliseconds: 320),
+            pageBuilder: (_, animation, secondaryAnimation) =>
+                RecipeDetailScreen(recipeData: recipe, heroTag: heroTag),
+            transitionsBuilder: (_, animation, secondaryAnimation, child) => FadeTransition(
+              opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+              child: child,
+            ),
           ),
         );
-        setState(() {}); // Favori durumu güncellemesi
+        setState(() {});
       },
       child: Container(
         decoration: BoxDecoration(
@@ -152,8 +160,8 @@ class _AllRecipesScreenState extends State<AllRecipesScreen> {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.07),
-              blurRadius: 10,
+              color: kGreen.withValues(alpha: 0.10),
+              blurRadius: 12,
               offset: const Offset(0, 3),
             ),
           ],
@@ -166,16 +174,19 @@ class _AllRecipesScreenState extends State<AllRecipesScreen> {
               flex: 3,
               child: Stack(
                 children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                    child: Image.network(
-                      recipe['image'] ?? '',
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        color: kLightGreen,
-                        child: const Center(
-                          child: Icon(Icons.restaurant, color: kGreen, size: 36),
+                  Hero(
+                    tag: heroTag,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                      child: Image.network(
+                        recipe['image'] ?? '',
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
+                          color: kLightGreen,
+                          child: const Center(
+                            child: Icon(Icons.restaurant, color: kGreen, size: 36),
+                          ),
                         ),
                       ),
                     ),

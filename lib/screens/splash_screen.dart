@@ -39,8 +39,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       _updateStatus('Öne çıkan tarifler kontrol ediliyor...', 0.3);
       await FirebaseSyncService.syncFeaturedRecipes(count: 5);
 
-      // Adım 2: Tüm verileri hafızaya yükle (DataProvider)
-      _updateStatus('Veriler yükleniyor...', 0.6);
+      // Adım 2: Mevcut kategori verilerini normalize et (İngilizce → Türkçe)
+      _updateStatus('Kategoriler düzenleniyor...', 0.5);
+      await FirebaseSyncService.normalizeCategories();
+
+      // Adım 3: Tüm verileri hafızaya yükle (DataProvider) - normalize sonrası temiz yükle
+      _updateStatus('Veriler yükleniyor...', 0.7);
+      DataProvider.instance.resetCache(); // önceki cache'i temizle
       await DataProvider.instance.initialize();
 
       // Adım 3: Kısa bir bekleme (splash'ın görünmesi için)

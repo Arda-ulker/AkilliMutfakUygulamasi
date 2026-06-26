@@ -19,7 +19,6 @@ class DataProvider {
   bool _isLoaded = false;
 
   // ── Gemini ──
-  static const String _apiKey = ApiKeys.geminiApiKey;
   late final GenerativeModel geminiModel;
   bool _geminiReady = false;
 
@@ -36,9 +35,35 @@ class DataProvider {
   }
 
   /// Kategoriye göre filtrelenmiş tarifler
+  /// Case-insensitive + İngilizce + kısmi eşleşme destekler
   List<Map<String, dynamic>> getTariflerByCategory(String category) {
     if (category == 'Tümü') return _tarifler;
-    return _tarifler.where((t) => t['category'] == category).toList();
+
+    // Her Türkçe kategoriye karşılık gelen anahtar kelimeler
+    const keywords = {
+      'Et':           ['et', 'beef', 'lamb','goat', 'meat'],
+      'Tavuk':        ['tavuk', 'chicken', 'poultry'],
+      'Hafif':        ['hafif', 'seafood', 'side', 'starter', 'breakfast', 'dessert', 'pasta', 'miscellaneous', 'light'],
+      'Zeytinyağlı':  ['zeytinyag', 'vegetarian', 'vegan', 'veggie', 'olive'],
+    };
+
+    final keys = keywords[category] ?? [category.toLowerCase()];
+
+    return _tarifler.where((t) {
+      final cat = (t['category'] ?? '').toString().toLowerCase().trim();
+      if (cat.isEmpty) return false;
+      // Tam eşleşme veya anahtar kelime içerme
+      return keys.any((k) => cat == k || cat.contains(k) || k.contains(cat));
+    }).toList();
+  }
+
+  /// Cache'i sıfırla (normalize sonrası temiz yüklemek için)
+  void resetCache() {
+    _isLoaded = false;
+    _tarifler = [];
+    _oneCikanTarifler = [];
+    _favoriler = [];
+    debugPrint('🔄 DataProvider: Cache sıfırlandı.');
   }
 
   /// Tüm verileri önceden yükle (Splash Screen'de çağrılır)
@@ -47,7 +72,7 @@ class DataProvider {
 
     try {
       // 1) Gemini modelini başlat
-      _initGemini();
+      await _initGemini();
 
       // 2) Firebase'den verileri çek (tek seferlik)
       await Future.wait([
@@ -68,16 +93,17 @@ class DataProvider {
   }
 
   /// Gemini modelini önceden başlat
-  void _initGemini() {
+  Future<void> _initGemini() async {
     try {
-      if (_apiKey.isEmpty || _apiKey.contains('BURAYA_GEMINI_API_ANAHTARINIZI_YAPISTIRIN')) {
+      final apiKey = await ApiKeys.geminiApiKey;
+      if (apiKey.isEmpty) {
         _geminiReady = false;
-        debugPrint('⚠️ DataProvider: Gemini API anahtarı ayarlanmamış veya varsayılan değerde.');
+        debugPrint('⚠️ DataProvider: Gemini API anahtarı ayarlanmamış.');
         return;
       }
       geminiModel = GenerativeModel(
         model: 'gemini-2.5-flash',
-        apiKey: _apiKey,
+        apiKey: apiKey,
         systemInstruction: Content.text(
           '''Sen deneyimli ve yardımsever bir Türk mutfak asistanısın. Adın "AI Şef".
 Görevin kullanıcılara yemek tarifleri, mutfak ipuçları ve malzeme önerileri sunmak.
@@ -108,6 +134,11 @@ Yanıt verirken şu kurallara uy:
       _tarifler = snapshot.docs
           .map((doc) => doc.data())
           .toList();
+
+      // DEBUG: Firebase'den gelen kategori değerlerini göster
+      final cats = _tarifler.map((t) => '"${t['category']}"').toSet().toList();
+      debugPrint('🗂️ DataProvider: Yüklenen kategoriler → $cats');
+      debugPrint('🗂️ DataProvider: Toplam ${_tarifler.length} tarif yüklendi.');
     } catch (e) {
       debugPrint('⚠️ Tarifler yüklenemedi: $e');
     }

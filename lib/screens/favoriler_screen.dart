@@ -56,7 +56,7 @@ class _FavorilerScreenState extends State<FavorilerScreen> {
                 children: [
                   const Text(
                     'Emir Hocanın Spesyalleri',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, letterSpacing: -0.4),
                   ),
                   Text(
                     '${_favoriler.length} tarif kaydedildi',
@@ -109,12 +109,20 @@ class _FavorilerScreenState extends State<FavorilerScreen> {
   }
 
   Widget _buildFavoriteCard(Map<String, dynamic> recipe, int index) {
+    final heroTag = 'recipe_fav_${recipe['title']}';
     return GestureDetector(
       onTap: () async {
         await Navigator.push(
           context,
-          MaterialPageRoute(
-            builder: (context) => RecipeDetailScreen(recipeData: recipe),
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 380),
+            reverseTransitionDuration: const Duration(milliseconds: 320),
+            pageBuilder: (_, animation, secondaryAnimation) =>
+                RecipeDetailScreen(recipeData: recipe, heroTag: heroTag),
+            transitionsBuilder: (_, animation, secondaryAnimation, child) => FadeTransition(
+              opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
+              child: child,
+            ),
           ),
         );
         // Detay ekranından döndüğünde favori durumunu güncelle
@@ -127,8 +135,8 @@ class _FavorilerScreenState extends State<FavorilerScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 10,
+              color: kGreen.withValues(alpha: 0.09),
+              blurRadius: 12,
               offset: const Offset(0, 3),
             ),
           ],
@@ -136,18 +144,21 @@ class _FavorilerScreenState extends State<FavorilerScreen> {
         child: Row(
           children: [
             // Resim
-            ClipRRect(
-              borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
-              child: Image.network(
-                recipe['image'] ?? '',
-                width: 110,
-                height: 110,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
+            Hero(
+              tag: heroTag,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.horizontal(left: Radius.circular(16)),
+                child: Image.network(
+                  recipe['image'] ?? '',
                   width: 110,
                   height: 110,
-                  color: kLightGreen,
-                  child: const Icon(Icons.restaurant, color: kGreen, size: 32),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => Container(
+                    width: 110,
+                    height: 110,
+                    color: kLightGreen,
+                    child: const Icon(Icons.restaurant, color: kGreen, size: 32),
+                  ),
                 ),
               ),
             ),

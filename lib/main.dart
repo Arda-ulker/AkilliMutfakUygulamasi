@@ -13,12 +13,12 @@ void main() async {
   // DataProvider.initialize() splash'ta çağrılıyor.
   runApp(const AkilliMutfakApp());
 }
-
 class AkilliMutfakApp extends StatelessWidget {
   const AkilliMutfakApp({super.key});
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      
       title: 'Akıllı Mutfak',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(

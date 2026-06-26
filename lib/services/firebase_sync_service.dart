@@ -7,8 +7,8 @@ import 'package:akilli_mutfak/constants/api_keys.dart';
 /// Firebase sync servisi - TheMealDB'den gelen tarifleri Firebase'e yazar
 /// ve Gemini ile tamamını Türkçeye çevirir
 class FirebaseSyncService {
-  static const String _geminiApiKey = ApiKeys.geminiApiKey;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
 
   /// Tarifleri TheMealDB'den çekip Firebase'e yaz
   /// Çeşitli kategorilerden tarif çeker
@@ -20,10 +20,12 @@ class FirebaseSyncService {
         debugPrint('Firebase\'de zaten tarifler mevcut, sync atlanıyor.');
         return;
       }
+      
 
       debugPrint('Tarifler sync ediliyor...');
 
-      if (_geminiApiKey.isEmpty || _geminiApiKey.contains('BURAYA_GEMINI_API_ANAHTARINIZI_YAPISTIRIN')) {
+      final geminiApiKey = await ApiKeys.geminiApiKey;
+      if (geminiApiKey.isEmpty) {
         debugPrint('⚠️ FirebaseSyncService: Gemini API anahtarı ayarlanmamış! Sync iptal ediliyor.');
         return;
       }
@@ -31,7 +33,7 @@ class FirebaseSyncService {
       // Gemini modelini çeviri için başlat
       final model = GenerativeModel(
         model: 'gemini-2.5-flash',
-        apiKey: _geminiApiKey,
+        apiKey: geminiApiKey,
       );
 
       // Çeşitli kategorilerden tarif çek
@@ -109,14 +111,15 @@ class FirebaseSyncService {
         return;
       }
 
-      if (_geminiApiKey.isEmpty || _geminiApiKey.contains('BURAYA_GEMINI_API_ANAHTARINIZI_YAPISTIRIN')) {
+      final geminiApiKey = await ApiKeys.geminiApiKey;
+      if (geminiApiKey.isEmpty) {
         debugPrint('⚠️ FirebaseSyncService: Gemini API anahtarı ayarlanmamış! Öne çıkan tarif sync iptal ediliyor.');
         return;
       }
 
       final model = GenerativeModel(
         model: 'gemini-2.5-flash',
-        apiKey: _geminiApiKey,
+        apiKey: geminiApiKey,
       );
 
       final meals = await RecipeApiService.fetchRandomMeals(count);
@@ -327,4 +330,30 @@ ${meal['instructions']}''';
     }
     debugPrint('💔 Tarif favorilerden kaldırıldı: $title');
   }
+
+  /// Firebase'deki mevcut tariflerin kategorilerini normalize et
+  /// İngilizce veya yanlış kaydedilmiş kategorileri Türkçeye çevirir
+  static Future<void> normalizeCategories() async {
+    const enToTr = {
+      'Beef': 'Et', 'Lamb': 'Et', 'Pork': 'Et', 'Goat': 'Et',
+      'Chicken': 'Tavuk',
+      'Seafood': 'Hafif', 'Side': 'Hafif', 'Starter': 'Hafif',
+      'Breakfast': 'Hafif', 'Dessert': 'Hafif', 'Pasta': 'Hafif',
+      'Miscellaneous': 'Hafif',
+      'Vegetarian': 'Zeytinyağlı', 'Vegan': 'Zeytinyağlı',
+    };
+
+    final tarifler = await _firestore.collection('Tarifler').get();
+    int fixed = 0;
+    for (final doc in tarifler.docs) {
+      final cat = doc.data()['category']?.toString() ?? '';
+      if (enToTr.containsKey(cat)) {
+        await doc.reference.update({'category': enToTr[cat]!});
+        fixed++;
+        debugPrint('🔧 Kategori düzeltildi: $cat → ${enToTr[cat]}');
+      }
+    }
+    debugPrint('✅ $fixed tarif kategorisi normalize edildi.');
+  }
 }
+

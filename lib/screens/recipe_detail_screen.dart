@@ -5,7 +5,8 @@ import 'package:akilli_mutfak/services/data_provider.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Map<String, dynamic> recipeData;
-  const RecipeDetailScreen({super.key, required this.recipeData});
+  final String? heroTag;
+  const RecipeDetailScreen({super.key, required this.recipeData, this.heroTag});
 
   @override
   State<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
@@ -91,14 +92,27 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    widget.recipeData['image'] ?? '',
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, _, _) => Container(
-                      color: kLightGreen,
-                      child: const Icon(Icons.restaurant, size: 60, color: kGreen),
+                  if (widget.heroTag != null)
+                    Hero(
+                      tag: widget.heroTag!,
+                      child: Image.network(
+                        widget.recipeData['image'] ?? '',
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Container(
+                          color: kLightGreen,
+                          child: const Icon(Icons.restaurant, size: 60, color: kGreen),
+                        ),
+                      ),
+                    )
+                  else
+                    Image.network(
+                      widget.recipeData['image'] ?? '',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Container(
+                        color: kLightGreen,
+                        child: const Icon(Icons.restaurant, size: 60, color: kGreen),
+                      ),
                     ),
-                  ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
